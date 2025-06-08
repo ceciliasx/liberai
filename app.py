@@ -4,6 +4,7 @@ import numpy as np
 import pickle
 import os
 import base64
+from sklearn.cluster import KMeans
 
 # Set page config
 st.set_page_config(page_title="⋆. 𐙚 ˚ liberai ˊˎ-", layout="centered")
@@ -29,7 +30,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
 # Load artifacts
 @st.cache_resource(show_spinner=True)
 def load_artifacts():
@@ -39,12 +39,14 @@ def load_artifacts():
             books_df = pickle.load(f)
         with open(os.path.join(artifacts_dir, 'cosine_sim.pkl'), 'rb') as f:
             cosine_sim = pickle.load(f)
+        with open(os.path.join(artifacts_dir, 'kmeans.pkl'), 'rb') as f:
+            kmeans = pickle.load(f)
     except FileNotFoundError:
         st.error("Model artifacts not found. Please run the main.ipynb script first.")
-        return None, None
-    return books_df, cosine_sim
+        return None, None, None
+    return books_df, cosine_sim, kmeans
 
-books_df, cosine_sim = load_artifacts()
+books_df, cosine_sim, kmeans = load_artifacts()
 
 # Main recommendation
 def recommend_books_hybrid(selected_titles, books_df, cosine_sim_matrix, top_n):
@@ -99,7 +101,6 @@ if books_df is not None:
     st.title('_⋆. 𐙚 ˚ liberai ˊˎ-_')
     st.markdown('╰┈➤ find a recommended book based on your favourites with **liberai** ! ── .✦')
     top_n = st.number_input('how many books do u want to see? [10-50] 👀',min_value=10, max_value=50, value=10, step=1)
-    # st.markdown(f"_liberai will show {top_n} books for u_")
 
     # User input
     selected_books = st.multiselect(
@@ -136,5 +137,36 @@ if books_df is not None:
                     st.warning("oh no! could not generate recommendations :( please try different books!")
         else:
             st.warning("oh no! that's not the desired amount :(")
+    
+    # Discover books using user-inputted genre from clusters
+    st.markdown('╰┈➤ explore ur genres! ── .✦')
+    
+    # User input
+    selected_cluster_name = st.selectbox(
+        "choose a genre! 📚",
+        sorted(books_df['cluster_name'].unique()),
+        index=0,
+        placeholder="select here"
+    )
+    
+    # Button for genre cluster
+    if st.button("find ur books!", type="primary", key="genre_button"):
+        filtered_books = books_df[books_df['cluster_name'] == selected_cluster_name]
+        st.success("thanks for waiting!")
+        st.subheader(f"ᯓ★ showing {len(filtered_books)} books in _{selected_cluster_name}_")
+        for _, row in filtered_books.iterrows():
+            st.markdown(f"**{row['title']}**")
+            st.caption(f"by *{row['author'].replace('_', ' ').title()}*")
+            st.caption(f"Genres: {row['genres'].lower()}")
+            description = row.get('description', '')
+            max_chars = 500
+            if pd.notna(description) and description.strip():
+                short_desc = (description[:max_chars] + '...') if len(description) > max_chars else description
+                st.markdown(f"{short_desc.strip()}")
+            else:
+                st.markdown("no description available :(")
+            st.caption(f"Rating: {row['rating']}")
+            st.markdown("---")
+
 else:
     st.stop()
