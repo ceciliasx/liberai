@@ -102,7 +102,7 @@ def recommend_books_hybrid(selected_titles, books_df, cosine_sim_matrix, top_n):
 if books_df is not None:
     st.title('_⋆. 𐙚 ˚ liberai ˊˎ-_')
     st.markdown('╰┈➤ find a recommended book based on your favourites with **liberai** ! ── .✦')
-    top_n = st.number_input('how many books do u want to see? [10-50] 👀',min_value=10, max_value=50, value=10, step=1)
+    top_n = st.number_input('how many books do you want to see? [10-50] 👀',min_value=10, max_value=50, value=10, step=1)
 
     # User input
     selected_books = st.multiselect(
@@ -113,7 +113,7 @@ if books_df is not None:
     )
 
     # Button
-    if st.button("find ur books!", type="primary"):
+    if st.button("find your books!", type="primary"):
         if len(selected_books) == 3:
             with st.spinner("finding great books for you..."):
                 recommendations = recommend_books_hybrid(selected_books, books_df, cosine_sim,top_n=top_n)
@@ -145,7 +145,7 @@ if books_df is not None:
             st.warning("oh no! that's not the desired amount :(")
     
     # Discover books using user-inputted genre from clusters
-    st.markdown('╰┈➤ explore ur genres! ── .✦')
+    st.markdown('╰┈➤ explore your genres! ── .✦')
     
     # User input
     selected_cluster_name = st.selectbox(
@@ -156,7 +156,7 @@ if books_df is not None:
     )
     
     # Button for genre cluster
-    if st.button("find ur books!", type="primary", key="genre_button"):
+    if st.button("find your books!", type="primary", key="genre_button"):
         filtered_books = books_df[books_df['cluster_name'] == selected_cluster_name]
         st.success("thanks for waiting!")
         st.subheader(f"ᯓ★ showing {len(filtered_books)} books in _{selected_cluster_name}_")
