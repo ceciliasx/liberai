@@ -4,7 +4,7 @@ import numpy as np
 import pickle
 import os
 import base64
-from sklearn.cluster import KMeans
+import ast
 
 # Set page config
 st.set_page_config(page_title="⋆. 𐙚 ˚ liberai ˊˎ-", layout="centered")
@@ -50,9 +50,8 @@ books_df, cosine_sim, kmeans = load_artifacts()
 
 # Main recommendation
 def recommend_books_hybrid(selected_titles, books_df, cosine_sim_matrix, top_n):
-    # Create a mapping from title to index for quick lookup
+    # Map title to index for quick lookup
     title_to_index = pd.Series(books_df.index, index=books_df['title'].str.lower()).to_dict()
-    
     indices = [title_to_index.get(title.lower()) for title in selected_titles if title.lower() in title_to_index]
 
     if not indices:
@@ -61,35 +60,38 @@ def recommend_books_hybrid(selected_titles, books_df, cosine_sim_matrix, top_n):
     # Calculate the average similarity score for the input books
     sim_scores = np.mean(cosine_sim_matrix[indices], axis=0)
     
-    # Get clusters of selected books
+    # Get books from the clusters
     selected_clusters = books_df.iloc[indices]['cluster'].unique()
     candidate_mask = books_df['cluster'].isin(selected_clusters)
     candidate_indices = np.where(candidate_mask)[0]
     candidate_indices = [i for i in candidate_indices if i not in indices]
     
-    # Create a DataFrame of candidate books
+    # Create a dataframe of candidate books with their similarity scores
     recommendations = pd.DataFrame({
         'index': candidate_indices,
         'similarity_score': sim_scores[candidate_indices]
     })
     
-    # Merge with original dataframe to get metadata for hybrid scoring
-    recommendations = recommendations.merge(books_df[['rating', 'numRatings','description']], left_on='index', right_index=True)
+    # Merge with original dataframe to get rating and numRatings
+    recommendations = recommendations.merge(books_df[['rating', 'numRatings']], left_on='index', right_index=True)
     
-    # Calculate hybrid score
+    # Normalize popularity (numRatings) using a log transform to handle skew, then scale to 0-1
     recommendations['popularity_score'] = np.log1p(recommendations['numRatings'])
     recommendations['popularity_score'] = recommendations['popularity_score'] / recommendations['popularity_score'].max()
     recommendations['rating_score'] = recommendations['rating'] / 5.0
+    
+    # Calculate hybrid score
+    # 50% content similarity, 30% rating, 20% popularity
     recommendations['hybrid_score'] = (
         (0.5 * recommendations['similarity_score']) +
         (0.3 * recommendations['rating_score']) +
         (0.2 * recommendations['popularity_score'])
     )
     
-    # Sort and get top N
+    # Sort by the hybrid score
     top_recommendations = recommendations.sort_values(by='hybrid_score', ascending=False).head(top_n)
     
-    # Get final book details
+    # Get the final book details
     final_indices = top_recommendations['index']
     final_recs = books_df.iloc[final_indices][['title', 'author', 'genres', 'rating', 'numRatings','description']].copy()
     final_recs['Hybrid Score'] = np.round(top_recommendations['hybrid_score'], 3)
@@ -121,9 +123,13 @@ if books_df is not None:
                     st.markdown("---")
 
                     for _, row in recommendations.iterrows():
+                        try:
+                            genres = ', '.join([g.strip().lower() for g in ast.literal_eval(row['genres'])])
+                        except:
+                            genres = row['genres'].lower()
                         st.markdown(f"**{row['title']}**")
                         st.caption(f"by *{row['author'].replace('_', ' ').title()}*")
-                        st.caption(f"Genres: {row['genres'].lower()}")
+                        st.caption(f"Genres: {genres}")
                         description = row.get('description', '')
                         max_chars = 500
                         if pd.notna(description) and description.strip():
@@ -155,9 +161,13 @@ if books_df is not None:
         st.success("thanks for waiting!")
         st.subheader(f"ᯓ★ showing {len(filtered_books)} books in _{selected_cluster_name}_")
         for _, row in filtered_books.iterrows():
+            try:
+                genres = ', '.join([g.strip().lower() for g in ast.literal_eval(row['genres'])])
+            except:
+                genres = row['genres'].lower()
             st.markdown(f"**{row['title']}**")
             st.caption(f"by *{row['author'].replace('_', ' ').title()}*")
-            st.caption(f"Genres: {row['genres'].lower()}")
+            st.caption(f"Genres: {genres}")
             description = row.get('description', '')
             max_chars = 500
             if pd.notna(description) and description.strip():
