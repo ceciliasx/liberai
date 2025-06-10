@@ -14,7 +14,7 @@ The recommendation system follows these main steps:
 1. **Data Preparation**: 
    - Cleans and filters raw book metadata.
    - Handles missing values and duplicates.
-   - Extracts key features such as `genres`, `authors`, and `descriptions`.
+   - Extracts key features such as `genres`, `authors`, and `title`.
 
 2. **Modeling**: 
    - Converts textual features into vectors using **TF-IDF**.
