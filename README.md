@@ -34,11 +34,13 @@ The recommendation system follows these main steps:
 ---
 
 ## 🗂️ Project Structure
+```
 ├── app.py # Streamlit app frontend
 ├── main.ipynb # Model training & development notebook
 ├── books_1.Best_Books_Ever.csv # Raw dataset
 ├── requirements.txt # Python dependencies
 └── README.md # Project documentation
+```
 
 ---
 
@@ -87,7 +89,8 @@ Explore the full model development process in main.ipynb. Key steps include:
 3. scikit-learn
 4. matplotlib
 5. seaborn
-6. streamlit
+6. scipy
+7. streamlit
 
 Install all dependencies with:
 ```bash
