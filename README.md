@@ -96,9 +96,3 @@ Install all dependencies with:
 ```bash
 pip install -r requirements.txt
 ```
-
----
-
-### 📬 Contact
-Built by Mary Anggita Priscilla, Agnes Julia Purnomo, Benedicta Joyce Sutandoyo.
-Reach me on [LinkedIn](www.linkedin.com/in/mary-anggita-priscilla-b275562a7) or [Email](mailto:priscillastext@gmail.com).
